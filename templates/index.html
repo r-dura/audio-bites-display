@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audio Bites Display</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #wordsList { margin-top: 20px; }
+        li { margin: 5px 0; }
+        #center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            margin-top: 300px;
+            font-size: 60px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Audio Bites Display</h1>
+    <p id = "center">Waiting for words...</p>
+    
+    <script type="text/javascript">
+        let socket = io.connect('http://' + document.domain + ':' + location.port);
+        let timeoutId = null;
+        let wordQueue = [];
+        
+        function displayNextWord() {
+            let wordDisplay = document.getElementById("center");
+
+            // Check if there are words in the queue
+            if (wordQueue.length > 0) {
+                let nextWord = wordQueue.pop(0); // Remove the first word from the queue
+                wordDisplay.textContent = nextWord.word; // Display the next word
+
+                // Set a timeout to display the next word or the waiting message
+                timeoutId = setTimeout(displayNextWord, nextWord.time * 1000); 
+            } else {
+                // If the queue is empty, show the waiting message
+                wordDisplay.textContent = 'Waiting for new bites...';
+            }
+        }
+
+        socket.on('display_word', function(data) {
+            // Add the incoming word and its display time to the queue
+            wordQueue.push({word: data.word, time: data.time}); 
+
+            // If this is the only word in the queue, start displaying it
+            if (wordQueue.length === 1) {
+                displayNextWord();
+            }
+        });
+    </script>
+</body>
+</html>
